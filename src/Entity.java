@@ -24,20 +24,11 @@ public class Entity {
     public static final String SAPLING_KEY = "sapling";
     public static final int SAPLING_HEALTH_IDX = 0;
     public static final int SAPLING_NUM_PROPERTIES = 1;
-    public static final String OBSTACLE_KEY = "obstacle";
-    public static final int OBSTACLE_ANIMATION_PERIOD_IDX = 0;
-    public static final int OBSTACLE_NUM_PROPERTIES = 1;
-    public static final String DUDE_KEY = "dude";
-    public static final int DUDE_ACTION_PERIOD_IDX = 0;
-    public static final int DUDE_ANIMATION_PERIOD_IDX = 1;
-    public static final int DUDE_RESOURCE_LIMIT_IDX = 2;
-    public static final int DUDE_NUM_PROPERTIES = 3;
+
+
     public static final String HOUSE_KEY = "house";
     public static final int HOUSE_NUM_PROPERTIES = 0;
-    public static final String FAIRY_KEY = "fairy";
-    public static final int FAIRY_ANIMATION_PERIOD_IDX = 0;
-    public static final int FAIRY_ACTION_PERIOD_IDX = 1;
-    public static final int FAIRY_NUM_PROPERTIES = 2;
+
     public static final String TREE_KEY = "tree";
     public static final int TREE_ANIMATION_PERIOD_IDX = 0;
     public static final int TREE_ACTION_PERIOD_IDX = 1;
@@ -138,21 +129,7 @@ public class Entity {
         return this.images.get(this.imageIndex % this.images.size());
     }
 
-    public Point nextPositionDude(WorldModel world, Point destPos) {
-        int horiz = Integer.signum(destPos.x - this.position.x);
-        Point newPos = new Point(this.position.x + horiz, this.position.y);
 
-        if (horiz == 0 || world.isOccupied(newPos) && world.getOccupancyCell(newPos).kind != EntityKind.STUMP) {
-            int vert = Integer.signum(destPos.y - this.position.y);
-            newPos = new Point(this.position.x, this.position.y + vert);
-
-            if (vert == 0 || world.isOccupied(newPos) && world.getOccupancyCell(newPos).kind != EntityKind.STUMP) {
-                newPos = this.position;
-            }
-        }
-
-        return newPos;
-    }
 
     public Point nextPositionFairy(WorldModel world, Point destPos) {
         int horiz = Integer.signum(destPos.x - this.position.x);
@@ -170,33 +147,7 @@ public class Entity {
         return newPos;
     }
 
-    public boolean moveToFull(WorldModel world, Entity target, EventScheduler scheduler) {
-        if (this.position.adjacent(target.position)) {
-            return true;
-        } else {
-            Point nextPos = this.nextPositionDude(world, target.position);
 
-            if (!this.position.equals(nextPos)) {
-                world.moveEntity(scheduler, this, nextPos);
-            }
-            return false;
-        }
-    }
-
-    public boolean moveToNotFull(WorldModel world, Entity target, EventScheduler scheduler) {
-        if (this.position.adjacent(target.position)) {
-            this.resourceCount += 1;
-            target.health--;
-            return true;
-        } else {
-            Point nextPos = this.nextPositionDude(world, target.position);
-
-            if (!this.position.equals(nextPos)) {
-                world.moveEntity(scheduler, this, nextPos);
-            }
-            return false;
-        }
-    }
 
     public boolean moveToFairy(WorldModel world, Entity target, EventScheduler scheduler) {
         if (this.position.adjacent(target.position)) {
@@ -323,23 +274,7 @@ public class Entity {
         }
     }
 
-    public void executeDudeFullActivity(WorldModel world, ImageStore imageStore, EventScheduler scheduler) {
-        Optional<Entity> fullTarget = world.findNearest(this.position, new ArrayList<>(List.of(EntityKind.HOUSE)));
 
-        if (fullTarget.isPresent() && this.moveToFull(world, fullTarget.get(), scheduler)) {
-            this.transformFull(world, scheduler, imageStore);
-        } else {
-            scheduler.scheduleEvent(this, Action.createActivityAction(this, world, imageStore), this.actionPeriod);
-        }
-    }
-
-    public void executeDudeNotFullActivity(WorldModel world, ImageStore imageStore, EventScheduler scheduler) {
-        Optional<Entity> target = world.findNearest(this.position, new ArrayList<>(Arrays.asList(EntityKind.TREE, EntityKind.SAPLING)));
-
-        if (target.isEmpty() || !this.moveToNotFull(world, target.get(), scheduler) || !this.transformNotFull(world, scheduler, imageStore)) {
-            scheduler.scheduleEvent(this, Action.createActivityAction(this, world, imageStore), this.actionPeriod);
-        }
-    }
 
     public void executeFairyActivity(WorldModel world, ImageStore imageStore, EventScheduler scheduler) {
         Optional<Entity> fairyTarget = world.findNearest(this.position, new ArrayList<>(List.of(EntityKind.STUMP)));
@@ -453,18 +388,7 @@ public class Entity {
         return new Entity(EntityKind.SAPLING, id, position, images, 0, 0, SAPLING_ACTION_ANIMATION_PERIOD, SAPLING_ACTION_ANIMATION_PERIOD, 0, SAPLING_HEALTH_LIMIT);
     }
 
-    /**
-     * Creates a new Fairy.
-     * @param id The Fairy's id
-     * @param position The Fairy's x,y location in the World.
-     * @param actionPeriod The time (seconds) taken for each activity (turning a Stump into a Sapling).
-     * @param animationPeriod The time (seconds) taken for each animation.
-     * @param images Images to use for the Fairy.
-     * @return a new Entity whose type is Fairy.
-     */
-    public static Entity createFairy(String id, Point position, double actionPeriod, double animationPeriod, List<PImage> images) {
-        return new Entity(EntityKind.FAIRY, id, position, images, 0, 0, actionPeriod, animationPeriod, 0, 0);
-    }
+
 
     /**
      * Creates a new DudeNotFull.
